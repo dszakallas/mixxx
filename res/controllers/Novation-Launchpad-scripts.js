@@ -4539,6 +4539,30 @@ var NovationLaunchpad = (function () {
   });
 
   /**
+   * The base implementation of `_.findIndex` and `_.findLastIndex` without
+   * support for iteratee shorthands.
+   *
+   * @private
+   * @param {Array} array The array to inspect.
+   * @param {Function} predicate The function invoked per iteration.
+   * @param {number} fromIndex The index to search from.
+   * @param {boolean} [fromRight] Specify iterating from right to left.
+   * @returns {number} Returns the index of the matched value, else `-1`.
+   */
+  function baseFindIndex(array, predicate, fromIndex, fromRight) {
+    var length = array.length,
+        index = fromIndex + (fromRight ? 1 : -1);
+
+    while (fromRight ? index-- : ++index < length) {
+      if (predicate(array[index], index, array)) {
+        return index;
+      }
+    }
+
+    return -1;
+  }
+
+  /**
    * Removes all key-value entries from the list cache.
    *
    * @private
@@ -5761,63 +5785,6 @@ var NovationLaunchpad = (function () {
     }
 
     return baseIsEqualDeep(value, other, bitmask, customizer, baseIsEqual, stack);
-  }
-
-  /**
-   * Performs a deep comparison between two values to determine if they are
-   * equivalent.
-   *
-   * **Note:** This method supports comparing arrays, array buffers, booleans,
-   * date objects, error objects, maps, numbers, `Object` objects, regexes,
-   * sets, strings, symbols, and typed arrays. `Object` objects are compared
-   * by their own, not inherited, enumerable properties. Functions and DOM
-   * nodes are compared by strict equality, i.e. `===`.
-   *
-   * @static
-   * @memberOf _
-   * @since 0.1.0
-   * @category Lang
-   * @param {*} value The value to compare.
-   * @param {*} other The other value to compare.
-   * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
-   * @example
-   *
-   * var object = { 'a': 1 };
-   * var other = { 'a': 1 };
-   *
-   * _.isEqual(object, other);
-   * // => true
-   *
-   * object === other;
-   * // => false
-   */
-
-  function isEqual(value, other) {
-    return baseIsEqual(value, other);
-  }
-
-  /**
-   * The base implementation of `_.findIndex` and `_.findLastIndex` without
-   * support for iteratee shorthands.
-   *
-   * @private
-   * @param {Array} array The array to inspect.
-   * @param {Function} predicate The function invoked per iteration.
-   * @param {number} fromIndex The index to search from.
-   * @param {boolean} [fromRight] Specify iterating from right to left.
-   * @returns {number} Returns the index of the matched value, else `-1`.
-   */
-  function baseFindIndex(array, predicate, fromIndex, fromRight) {
-    var length = array.length,
-        index = fromIndex + (fromRight ? 1 : -1);
-
-    while (fromRight ? index-- : ++index < length) {
-      if (predicate(array[index], index, array)) {
-        return index;
-      }
-    }
-
-    return -1;
   }
 
   /** Used to compose bitmasks for value comparisons. */
@@ -8767,6 +8734,10 @@ var NovationLaunchpad = (function () {
     'short': presets.short
   };
 
+  var blockEquals = function blockEquals(a, b) {
+    return a.offset === b.offset && a.size === b.size && a.channel === b.channel && a.index === b.index;
+  };
+
   var reorganize = function reorganize(current, selectedChannels) {
     var next = function (chs) {
       switch (chs.length) {
@@ -8843,7 +8814,7 @@ var NovationLaunchpad = (function () {
           pos = _diff[1];
 
       var matched = findIndex(pos, function (b) {
-        return isEqual(block, b);
+        return blockEquals(block, b);
       });
       return matched === -1 ? [neg.concat([block]), pos] : [neg, pos.slice(0, matched).concat(pos.slice(matched + 1, pos.length))];
     }, [[], next]);
